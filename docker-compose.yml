@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: phsar
+      POSTGRES_USER: seanglay
+      POSTGRES_PASSWORD: seanglay@phsar
+    ports:
+      - 5321:5432
+    networks:
+      - phsar-network
+
+networks:
+  phsar-network:
+    driver: bridge
