@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordRequestForm
 from starlette.responses import JSONResponse
 
 from src.core import database
