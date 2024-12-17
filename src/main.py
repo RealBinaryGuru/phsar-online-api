@@ -11,7 +11,7 @@ from .route import auth
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     max_retries = 10
     retry_interval = 1  # seconds
 
