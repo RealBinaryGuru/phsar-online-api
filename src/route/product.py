@@ -5,8 +5,7 @@ from src.core import database
 from src.model import schemas, models
 
 router = APIRouter(prefix="/products",
-                   tags=["Authentication"]
-                   )
+                   tags=["Products"])
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -28,15 +27,4 @@ async def get_product(product_id: int, db: Session = Depends(database.get_db)):
     product = db.query(models.Product).filter(models.Product.product_id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    return product
-
-
-@router.put("/{product_id}/stock", status_code=status.HTTP_200_OK)
-async def update_stock(product_id: int, stock: int, db: Session = Depends(database.get_db)):
-    product = db.query(models.Product).filter(models.Product.product_id == product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    product.stock = stock
-    db.commit()
-    db.refresh(product)
     return product

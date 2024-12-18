@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from .core import database
 from .model import models
-from .route import auth, product
+from .route import auth, product, order, order_item
 
 
 @asynccontextmanager
@@ -54,3 +54,5 @@ def read_root():
 
 app.include_router(auth.router)
 app.include_router(product.router)
+app.include_router(order.router)
+app.include_router(order_item.router)

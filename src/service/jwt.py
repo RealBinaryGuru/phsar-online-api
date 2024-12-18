@@ -1,29 +1,50 @@
-from typing import Optional
+from typing import Optional, Dict
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-import os
-from dotenv import load_dotenv
+from fastapi import HTTPException, status
 
-load_dotenv()
+from src.core.getenv import Environment
 
-SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-TOKEN_EXPIRE_MINUTES = int(os.getenv("TOKEN_EXPIRE", 15))
+env = Environment()
+SECRET_KEY = env.SECRET_KEY or "default_secret_key"
+ALGORITHM = env.ALGORITHM or "HS256"
+TOKEN_EXPIRE = env.TOKEN_EXPIRE or 15
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: Dict[str, any], expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=TOKEN_EXPIRE))
+    to_encode.update({"exp": expire, "sub": str(data["sub"])})
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return token
 
 
-def verify_access_token(token: str) -> dict:
+def verify_access_token(token: str) -> Dict[str, any]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if not email:
-            raise ValueError("Invalid token: 'sub' claim missing")
-        return {"email": email}
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: 'sub' claim missing",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+        return {"user_id": int(user_id)}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    except jwt.JWTClaimsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token claims",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
     except JWTError as e:
-        raise ValueError("Invalid token") from e
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"}
+        )

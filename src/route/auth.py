@@ -49,11 +49,11 @@ async def login(request: schemas.UserAuth, db: Session = Depends(database.get_db
     if not user:
         return ErrorHandler.Unauthorized("Invalid email or password")
 
-    access_token_expires = timedelta(minutes=15)
+    access_token_expires = timedelta(minutes=TOKEN_EXPIRE)
     access_token = jwt.create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+        data={"sub": user.user_id},
+        expires_delta=access_token_expires
     )
-
     return JSONResponse(content={"access_token": access_token})
 
 
